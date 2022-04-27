@@ -15,14 +15,17 @@ def Get_Digest_Dictionary(path):
 def Save_Digest(path, file, modified):
     digest_dictionary = Get_Digest_Dictionary(path)
 
-    if file in digest_dictionary:
-        digest_dictionary[file].append([modified, 500])
+    file_name = str(file)
+
+    if file_name in digest_dictionary:
+        digest_dictionary[file_name].append([modified, 500])
         
     else:
-        digest_dictionary[file] = [modified, 700]
+        digest_dictionary[file_name] = [modified, 700]
 
     with open((str(path) + '.json'), 'w') as js:
         json.dump(digest_dictionary, js,  indent=4)
+        js.close()
 
 def Update_Digest(path):
 
