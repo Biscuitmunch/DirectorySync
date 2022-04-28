@@ -5,6 +5,7 @@ import json
 import hashlib
 
 def Create_Hash(path):
+    # Hashing the data as a hex digest
     with open(path, 'rb') as file:
         data = file.read()
         return str(hashlib.sha256(data).hexdigest());
@@ -35,26 +36,30 @@ def Save_Digest(path, file):
 
     file_name = str(file)
 
+    # Adding specific file to the dictionary which will be the .json file
     if file_name in digest_dictionary:
         digest_dictionary[file_name].append([modified, file_hash])
-        
+    
+    # If it was not there, we create it
     else:
         digest_dictionary[file_name] = [[modified, file_hash]]
 
-
-
+    # Dumping the new data to the .json file
     with open(json_path_complete, 'w') as js:
         json.dump(digest_dictionary, js,  indent=4)
         js.close()
 
 def Update_Digest(path):
 
+    # Iterating all files
     file_list = Path(path).glob('*')
     for file in file_list:
         
+        # If it is a directory, we recursively run this again to get that digest
         if file.is_dir():
             Update_Digest(file)
         
+        # Otherwise, perform normal actions
         if file.is_file():
             Save_Digest(path, file)
 
