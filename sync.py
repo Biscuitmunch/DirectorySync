@@ -21,6 +21,18 @@ def Get_Digest_Dictionary(path):
     else:
         return {}
 
+def Add_To_Dictionary(digest_dictionary, file_name, modified, file_hash):
+
+
+
+    if file_name in digest_dictionary:
+        digest_dictionary[file_name].append([modified, file_hash])
+    
+    # If it was not there, we create it
+    else:
+        digest_dictionary[file_name] = [[modified, file_hash]]
+
+    return digest_dictionary
 
 def Save_Digest(path, file):
     modified = Get_Modified_Time(file)
@@ -81,4 +93,7 @@ dir2User = input()
 path1 = Path(dir1User)
 Update_Digest(path1)
 
+# path2
+path2 = Path(dir2User)
+Update_Digest(path2)
 
