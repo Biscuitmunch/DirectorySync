@@ -54,6 +54,12 @@ def Update_Digest(path):
     # Iterating all files
     file_list = Path(path).glob('*')
     for file in file_list:
+
+        # Make sure it is not a hidden file
+        file_name_split = str(file).split('/')
+        if file_name_split[-1][0] == '.': # If hidden file we skip to next file
+            print("hidden file")
+            continue
         
         # If it is a directory, we recursively run this again to get that digest
         if file.is_dir():
