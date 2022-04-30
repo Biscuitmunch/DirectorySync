@@ -3,6 +3,7 @@ from hmac import digest
 from pathlib import Path
 import json
 import hashlib
+import sys
 
 def Create_Hash(path):
     # Hashing the data as a hex digest
@@ -86,8 +87,8 @@ def Update_Digest(path):
 def Compare_Digest(path):
     print("hello")
 
-dir1User = input()
-dir2User = input()
+dir1User = sys.argv[1]
+dir2User = sys.argv[2]
 
 # path1
 path1 = Path(dir1User)
