@@ -1,8 +1,11 @@
 from array import array
 from hmac import digest
+import os
 from pathlib import Path
 import json
 import hashlib
+from pickle import FALSE
+import shutil
 import sys
 
 def Create_Hash(path):
@@ -23,8 +26,6 @@ def Get_Digest_Dictionary(path):
         return {}
 
 def Add_To_Dictionary(digest_dictionary, file_name, modified, file_hash):
-
-
 
     if file_name in digest_dictionary:
         digest_dictionary[file_name].append([modified, file_hash])
@@ -82,19 +83,46 @@ def Update_Digest(path):
         if file.is_file():
             Save_Digest(path, file)
 
+def Remove_Hiddens(path):
+    # Iterating all files
+    file_list = Path(path).glob('*')
+    for file in file_list:
 
+        # If hidden file, we delete
+        file_name_split = str(file).split('/')
+        if file_name_split[-1][0] == '.': # If hidden file we skip to next file
+            os.remove(str(file))
+        
+        # If it is a directory, check next layer down
+        if file.is_dir():
+            Remove_Hiddens(file)
 
 def Compare_Digest(path):
     print("hello")
 
-dir1User = sys.argv[1]
-dir2User = sys.argv[2]
+path1 = Path(sys.argv[1])
+path2 = Path(sys.argv[2])
+
+if (path1.is_dir == False and path2.is_dir == False):
+    print("Both Invalid Directories")
+    quit()
+    
+if (path1 == path2):
+    print("Same Directory!")
+    quit()
+
+if (path1.is_dir() == True and path2.exists() == False):
+    shutil.copytree(str(path1), str(path2))
+    Remove_Hiddens(path2)
+
+if (path2.is_dir() == True and path1.exists() == False):
+    shutil.copytree(str(path2), str(path1))
+    Remove_Hiddens(path1)
+
 
 # path1
-path1 = Path(dir1User)
 Update_Digest(path1)
 
 # path2
-path2 = Path(dir2User)
 Update_Digest(path2)
 
