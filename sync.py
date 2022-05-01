@@ -43,8 +43,8 @@ def Save_Digest(path, file):
     # json file locations
     path_for_json = str(path)
     array_of_paths = path_for_json.split('/')
-    final_name = array_of_paths[-1]
-    json_path_complete = path_for_json + '/.' + final_name + '.json'
+    # final_name = array_of_paths[-1]
+    json_path_complete = path_for_json + '/.' + 'sync' + '.json'
 
     digest_dictionary = Get_Digest_Dictionary(json_path_complete)
 
