@@ -114,11 +114,16 @@ if (path1 == path2):
 if (path1.is_dir() == True and path2.exists() == False):
     shutil.copytree(str(path1), str(path2))
     Remove_Hiddens(path2)
+    Update_Digest(path1)
+    Update_Digest(path2)
+    quit()
 
 if (path2.is_dir() == True and path1.exists() == False):
     shutil.copytree(str(path2), str(path1))
     Remove_Hiddens(path1)
-
+    Update_Digest(path1)
+    Update_Digest(path2)
+    quit()
 
 # path1
 Update_Digest(path1)
