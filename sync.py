@@ -42,7 +42,7 @@ def Save_Digest(path, file):
 
     # json file locations
     path_for_json = str(path)
-    array_of_paths = path_for_json.split('/')
+    # array_of_paths = path_for_json.split('/')
     # final_name = array_of_paths[-1]
     json_path_complete = path_for_json + '/.' + 'sync' + '.json'
 
@@ -97,8 +97,26 @@ def Remove_Hiddens(path):
         if file.is_dir():
             Remove_Hiddens(file)
 
-def Compare_Digest(path):
-    print("hello")
+def Compare_Digest(path1, path2):
+    path1_for_json = str(path1)
+    json_path1 = path1_for_json + '/.' + 'sync' + '.json'
+    path1_dictionary = Get_Digest_Dictionary(json_path1)
+
+    path2_for_json = str(path2)
+    json_path2 = path2_for_json + '/.' + 'sync' + '.json'
+    path2_dictionary = Get_Digest_Dictionary(json_path2)
+
+    for key1, value1 in path1_dictionary.items():
+        for key2, value2 in path2_dictionary.items():
+
+            name1 = key1.split('/')[-1]
+            name2 = key2.split('/')[-1]
+
+            if (name1 == name2):
+                print('matching')
+            else:
+                print('not')
+        
 
 path1 = Path(sys.argv[1])
 path2 = Path(sys.argv[2])
@@ -131,3 +149,4 @@ Update_Digest(path1)
 # path2
 Update_Digest(path2)
 
+Compare_Digest(path1, path2)
