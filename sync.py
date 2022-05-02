@@ -17,6 +17,9 @@ def Create_Hash(path):
 def Get_Modified_Time(path):
     return Path(path).stat().st_mtime
 
+def Get_Accessed_Time(path):
+    return Path(path).stat().st_atime
+
 def Get_Digest_Dictionary(path):
     # check if exists
     if Path.exists(Path(path)):
@@ -28,7 +31,7 @@ def Get_Digest_Dictionary(path):
 def Add_To_Dictionary(digest_dictionary, file_name, modified, file_hash):
 
     if file_name in digest_dictionary:
-        digest_dictionary[file_name].append([modified, file_hash])
+        digest_dictionary[file_name].insert(0,[modified, file_hash])
     
     # If it was not there, we create it
     else:
@@ -39,6 +42,7 @@ def Add_To_Dictionary(digest_dictionary, file_name, modified, file_hash):
 def Save_Digest(path, file):
     modified = Get_Modified_Time(file)
     file_hash = Create_Hash(file)
+    accessed = Get_Accessed_Time(file)
 
     # json file locations
     path_for_json = str(path)
@@ -52,7 +56,11 @@ def Save_Digest(path, file):
 
     # Adding specific file to the dictionary which will be the .json file
     if file_name in digest_dictionary:
-        digest_dictionary[file_name].append([modified, file_hash])
+        print(digest_dictionary[file_name][0][0])
+        if (digest_dictionary[file_name][0][1] == file_hash):
+            os.utime(file_name, (accessed, digest_dictionary[file_name][0][0]))
+        else:
+            digest_dictionary[file_name].insert(0,[modified, file_hash])
     
     # If it was not there, we create it
     else:
@@ -72,7 +80,6 @@ def Update_Digest(path):
         # Make sure it is not a hidden file
         file_name_split = str(file).split('/')
         if file_name_split[-1][0] == '.': # If hidden file we skip to next file
-            print("hidden file")
             continue
         
         # If it is a directory, we recursively run this again to get that digest
@@ -97,6 +104,9 @@ def Remove_Hiddens(path):
         if file.is_dir():
             Remove_Hiddens(file)
 
+#def Copy_And_Replace(src_path, dest_path):
+
+
 def Compare_Digest(path1, path2):
     path1_for_json = str(path1)
     json_path1 = path1_for_json + '/.' + 'sync' + '.json'
@@ -113,7 +123,14 @@ def Compare_Digest(path1, path2):
             name2 = key2.split('/')[-1]
 
             if (name1 == name2):
-                print('matching')
+                # Check if file same digest
+                if (value1[1] == value2[1]):
+                    # Compare modification Dates
+                    if (value1[0] > value2[0]):
+                        print('1 bigger')
+
+                    
+
             else:
                 print('not')
         
@@ -143,10 +160,11 @@ if (path2.is_dir() == True and path1.exists() == False):
     Update_Digest(path2)
     quit()
 
-# path1
+# Path1
 Update_Digest(path1)
 
-# path2
+# Path2
 Update_Digest(path2)
 
+# Deleted File Check
 Compare_Digest(path1, path2)
