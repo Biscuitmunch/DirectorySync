@@ -56,7 +56,6 @@ def Save_Digest(path, file):
 
     # Adding specific file to the dictionary which will be the .json file
     if file_name in digest_dictionary:
-        print(digest_dictionary[file_name][0][0])
         if (digest_dictionary[file_name][0][1] == file_hash):
             os.utime(file_name, (accessed, digest_dictionary[file_name][0][0]))
         else:
@@ -104,8 +103,20 @@ def Remove_Hiddens(path):
         if file.is_dir():
             Remove_Hiddens(file)
 
-#def Copy_And_Replace(src_path, dest_path):
+def Copy_And_Replace(src_path, dest_path):
+    os.remove(dest_path)
+    shutil.copy2(src_path, dest_path)
 
+def Find_Index(dictionary, key, value):
+    for i in range(len(dictionary[key])):
+        print(dictionary[key][i])
+        print(value)
+        print(' ')
+        if (value == dictionary[key][i]):
+            return i
+
+    print("Value not found error")
+    quit()
 
 def Compare_Digest(path1, path2):
     path1_for_json = str(path1)
@@ -115,6 +126,9 @@ def Compare_Digest(path1, path2):
     path2_for_json = str(path2)
     json_path2 = path2_for_json + '/.' + 'sync' + '.json'
     path2_dictionary = Get_Digest_Dictionary(json_path2)
+    
+    path1_dir_names = []
+    path2_dir_names = []
 
     for key1, value1 in path1_dictionary.items():
         for key2, value2 in path2_dictionary.items():
@@ -122,18 +136,43 @@ def Compare_Digest(path1, path2):
             name1 = key1.split('/')[-1]
             name2 = key2.split('/')[-1]
 
+            path1_dir_names.append(name1)
+            path2_dir_names.append(name2)
+
             if (name1 == name2):
                 # Check if file same digest
-                if (value1[1] == value2[1]):
+                if (value1[0][1] == value2[0][1]):
+
                     # Compare modification Dates
-                    if (value1[0] > value2[0]):
-                        print('1 bigger')
+                    if (value1[0][0] > value2[0][0]):
+                        Copy_And_Replace(key1, key2)
+                        path2_dictionary[key2][0][0] = path1_dictionary[key1][0][0]
+                        Force_Save_JSON(path2_dictionary, json_path2)
 
-                    
+                    elif (value1[0][0] < value2[0][0]):
+                        Copy_And_Replace(key1, key2)
+                        path1_dictionary[key1][0][0] = path2_dictionary[key2][0][0]
+                        Force_Save_JSON(path1_dictionary, json_path1)
 
-            else:
-                print('not')
+    # Adding not found files from path 1 to path 2
+    for name in path1_dir_names:
+        if name not in path2_dir_names:
+            shutil.copy2(str(path1) + '/' + name, str(path2) + '/' + name)
+
+    for name in path2_dir_names:
+        if name not in path1_dir_names:
+            shutil.copy2(str(path2) + '/' + name, str(path1) + '/' + name)
+
+    Update_Digest(path1)
+    Update_Digest(path2)
+
         
+def Force_Save_JSON(dictionary, path):
+    # Dumping the new data to the .json file
+    with open(path, 'w') as js:
+        json.dump(dictionary, js,  indent=4)
+        js.close()
+
 
 path1 = Path(sys.argv[1])
 path2 = Path(sys.argv[2])
