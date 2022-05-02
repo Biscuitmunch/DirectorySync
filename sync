@@ -48,7 +48,7 @@ def Save_Digest(path, file):
     path_for_json = str(path)
     # array_of_paths = path_for_json.split('/')
     # final_name = array_of_paths[-1]
-    json_path_complete = path_for_json + '/.' + 'sync' + '.json'
+    json_path_complete = path_for_json + '/.sync'
 
     digest_dictionary = Get_Digest_Dictionary(json_path_complete)
 
@@ -120,11 +120,11 @@ def Find_Index(dictionary, key, value):
 
 def Compare_Digest(path1, path2):
     path1_for_json = str(path1)
-    json_path1 = path1_for_json + '/.' + 'sync' + '.json'
+    json_path1 = path1_for_json + '/.sync'
     path1_dictionary = Get_Digest_Dictionary(json_path1)
 
     path2_for_json = str(path2)
-    json_path2 = path2_for_json + '/.' + 'sync' + '.json'
+    json_path2 = path2_for_json + '/.sync'
     path2_dictionary = Get_Digest_Dictionary(json_path2)
     
     path1_dir_names = []
