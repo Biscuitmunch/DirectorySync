@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import json
 import hashlib
-from pickle import FALSE
 import shutil
 import sys
 
@@ -118,7 +117,18 @@ def Find_Index(dictionary, key, value):
             return i
 
     print("Value not found error")
-    quit()
+
+def Compare_Previous_Hashes(value_src, value_dest):
+
+    for compare in value_dest:
+        if value_src[0][1] == compare[1]:
+            return True
+
+    return False
+
+#def Check_Deletions_And_Overwrite(value_src, value_dest):
+#    print('todo') # TODO
+
 
 def Compare_Digest(path1, path2):
     path1_for_json = str(path1)
@@ -132,29 +142,63 @@ def Compare_Digest(path1, path2):
     path1_dir_names = []
     path2_dir_names = []
 
+    for key, value in path1_dictionary.items():
+        name = key.split('/')[-1]
+        path1_dir_names.append(name)
+
+    for key, value in path2_dictionary.items():
+        name = key.split('/')[-1]
+        path2_dir_names.append(name)
+
     for key1, value1 in path1_dictionary.items():
         for key2, value2 in path2_dictionary.items():
 
             name1 = key1.split('/')[-1]
             name2 = key2.split('/')[-1]
 
-            path1_dir_names.append(name1)
-            path2_dir_names.append(name2)
-
             if (name1 == name2):
-                # Check if file same digest
+                # Check if file same digest, modification will determine the rest
                 if (value1[0][1] == value2[0][1]):
 
                     # Compare modification Dates
-                    if (value1[0][0] > value2[0][0]):
+                    # Setting both files to the earlier modified date
+                    if (value1[0][0] < value2[0][0]):
                         Copy_And_Replace(key1, key2)
                         path2_dictionary[key2][0][0] = path1_dictionary[key1][0][0]
                         Force_Save_JSON(path2_dictionary, json_path2)
 
-                    elif (value1[0][0] < value2[0][0]):
+                    # Setting both files to the earlier modified date
+                    elif (value1[0][0] > value2[0][0]):
                         Copy_And_Replace(key1, key2)
                         path1_dictionary[key1][0][0] = path2_dictionary[key2][0][0]
                         Force_Save_JSON(path1_dictionary, json_path1)
+
+                # This means value1 (first directory) was found in earlier versions of value2 (second directory)
+                # Copy value2 (second directory) file to value1 (first directory)
+                elif Compare_Previous_Hashes(value1, value2):
+                    Copy_And_Replace(key2, key1)
+                    Update_Digest(path1)
+                    
+                # This means value2 (second directory) was found in earlier versions of value1 (first directory)
+                # Copy value1 (first directory) file to value2 (second directory)
+                elif Compare_Previous_Hashes(value2, value1):
+                    Copy_And_Replace(key1, key2)
+                    Update_Digest(path2)
+
+                #elif Check_Deletions_And_Overwrite(value1, value2):
+                #    print('ayo')
+
+                # Checking the most recent modified, because none of the digests matched
+                else:
+                    # Compare modification Dates
+                    if (value1[0][0] > value2[0][0]):
+                        Copy_And_Replace(key1, key2)
+                        Update_Digest(path2)
+
+                    elif (value1[0][0] < value2[0][0]):
+                        Copy_And_Replace(key2, key1)
+                        Update_Digest(path1)
+
 
     # Adding not found files from path 1 to path 2
     for name in path1_dir_names:
