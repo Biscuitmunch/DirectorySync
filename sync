@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-from array import array
-from hmac import digest
 import os
 from pathlib import Path
 import json
 import hashlib
 import shutil
 import sys
+import time
 
 def Create_Hash(path):
     # Hashing the data as a hex digest
@@ -71,12 +70,21 @@ def Save_Digest(path, file):
         json.dump(digest_dictionary, js,  indent=4)
         js.close()
 
+def Force_Save_JSON(dictionary, path):
+    # Dumping the new data to the .json file
+    with open(path, 'w') as js:
+        json.dump(dictionary, js,  indent=4)
+        js.close()
+
 def Update_Digest(path):
+
+    file_name_strings = []
 
     # Iterating all files
     file_list = Path(path).glob('*')
     for file in file_list:
 
+        file_name_strings.append(str(file))
         # Make sure it is not a hidden file
         file_name_split = str(file).split('/')
         if file_name_split[-1][0] == '.': # If hidden file we skip to next file
@@ -89,6 +97,20 @@ def Update_Digest(path):
         # Otherwise, perform normal actions
         if file.is_file():
             Save_Digest(path, file)
+
+    # Checking for deleted files too
+    json_path = Path(str(path) + '/.sync')
+    delete_dictionary = Get_Digest_Dictionary(json_path)
+    for key, value in delete_dictionary.items():
+        if key not in file_name_strings and delete_dictionary[key][0][1] != 'deleted':
+            delete_dictionary[key].insert(0,[time.time(), 'deleted'])
+            Force_Save_JSON(delete_dictionary, json_path)
+            
+def One_Path_Exists(src_path, dest_path):
+    shutil.copytree(str(src_path), str(dest_path))
+    Remove_Hiddens(dest_path)
+    Update_Digest(src_path)
+    Update_Digest(dest_path)
 
 def Remove_Hiddens(path):
     # Iterating all files
@@ -105,7 +127,8 @@ def Remove_Hiddens(path):
             Remove_Hiddens(file)
 
 def Copy_And_Replace(src_path, dest_path):
-    os.remove(dest_path)
+    if Path(dest_path).exists() == True:
+        os.remove(dest_path)
     shutil.copy2(src_path, dest_path)
 
 def Find_Index(dictionary, key, value):
@@ -121,14 +144,10 @@ def Find_Index(dictionary, key, value):
 def Compare_Previous_Hashes(value_src, value_dest):
 
     for compare in value_dest:
-        if value_src[0][1] == compare[1]:
+        if value_src[0][1] == compare[1] and value_src[0][1] != "deleted":
             return True
 
     return False
-
-#def Check_Deletions_And_Overwrite(value_src, value_dest):
-#    print('todo') # TODO
-
 
 def Compare_Digest(path1, path2):
     path1_for_json = str(path1)
@@ -138,7 +157,7 @@ def Compare_Digest(path1, path2):
     path2_for_json = str(path2)
     json_path2 = path2_for_json + '/.sync'
     path2_dictionary = Get_Digest_Dictionary(json_path2)
-    
+
     path1_dir_names = []
     path2_dir_names = []
 
@@ -150,6 +169,15 @@ def Compare_Digest(path1, path2):
         name = key.split('/')[-1]
         path2_dir_names.append(name)
 
+    # Adding not found files from path 1 to path 2
+    for name in path1_dir_names:
+        if name not in path2_dir_names:
+            shutil.copy2(str(path1) + '/' + name, str(path2) + '/' + name)
+
+    for name in path2_dir_names:
+        if name not in path1_dir_names:
+            shutil.copy2(str(path2) + '/' + name, str(path1) + '/' + name)
+
     for key1, value1 in path1_dictionary.items():
         for key2, value2 in path2_dictionary.items():
 
@@ -157,8 +185,24 @@ def Compare_Digest(path1, path2):
             name2 = key2.split('/')[-1]
 
             if (name1 == name2):
+                if (value1[0][1] == "deleted" or value2[0][1] == "deleted"):
+                    # If the deleted is not the most recent
+                    if (value1[0][1] == "deleted" and value2[0][0] > value1[0][0]):
+                        if Path(key2).exists() == True:
+                            Copy_And_Replace(key2, key1)
+                            Update_Digest(path1)
+                    elif (value2[0][1] == "deleted" and value1[0][0] > value2[0][0]):
+                        if Path(key1).exists() == True:
+                            Copy_And_Replace(key1, key2)
+                            Update_Digest(path2)
+                    else:
+                        if Path(key1).exists() == True:
+                            os.remove(key1)
+                        if Path(key2).exists() == True:
+                            os.remove(key2)
+
                 # Check if file same digest, modification will determine the rest
-                if (value1[0][1] == value2[0][1]):
+                elif (value1[0][1] == value2[0][1]):
 
                     # Compare modification Dates
                     # Setting both files to the earlier modified date
@@ -185,9 +229,6 @@ def Compare_Digest(path1, path2):
                     Copy_And_Replace(key1, key2)
                     Update_Digest(path2)
 
-                #elif Check_Deletions_And_Overwrite(value1, value2):
-                #    print('ayo')
-
                 # Checking the most recent modified, because none of the digests matched
                 else:
                     # Compare modification Dates
@@ -199,25 +240,41 @@ def Compare_Digest(path1, path2):
                         Copy_And_Replace(key2, key1)
                         Update_Digest(path1)
 
+            Update_Digest(path1)
+            Update_Digest(path2)
 
-    # Adding not found files from path 1 to path 2
-    for name in path1_dir_names:
-        if name not in path2_dir_names:
-            shutil.copy2(str(path1) + '/' + name, str(path2) + '/' + name)
+        
 
-    for name in path2_dir_names:
-        if name not in path1_dir_names:
-            shutil.copy2(str(path2) + '/' + name, str(path1) + '/' + name)
+
+    # Looping for any sub-directories
+    file_list_1 = path1.glob('*')
+    file_list_2 = path2.glob('*')
+    for file in file_list_1:
+        if file.is_dir():
+            # Make both directories equal
+            name = str(file).split('/')[-1]
+            second_dir = Path(str(path2) + '/' + name)
+
+            if (second_dir.exists() == False):
+                One_Path_Exists(file, second_dir)
+
+            else:
+                Compare_Digest(file, second_dir)
+
+    for file in file_list_2:
+        if file.is_dir():
+            # Make both directories equal
+            name = str(file).split('/')[-1]
+            second_dir = Path(str(path1) + '/' + name)
+
+            if (second_dir.exists() == False):
+                One_Path_Exists(file, second_dir)
+
+            else:
+                Compare_Digest(file, second_dir)
 
     Update_Digest(path1)
     Update_Digest(path2)
-
-        
-def Force_Save_JSON(dictionary, path):
-    # Dumping the new data to the .json file
-    with open(path, 'w') as js:
-        json.dump(dictionary, js,  indent=4)
-        js.close()
 
 
 path1 = Path(sys.argv[1])
