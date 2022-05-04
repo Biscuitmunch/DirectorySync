@@ -310,3 +310,5 @@ Update_Digest(path2)
 
 # Deleted File Check
 Compare_Digest(path1, path2)
+
+time.sleep(1) # stops code going too fast and modification times coming too close
