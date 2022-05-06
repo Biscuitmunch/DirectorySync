@@ -21,7 +21,7 @@ would not do well with syncing big directories, between the CPU strain and the r
 fairly slow solution to a syncing problem.
 
 2:
-Assumption 3 - "The pathnames sent to the sync program will be independent. You don't have to worry about infinite
+Assumption - "The pathnames sent to the sync program will be independent. You don't have to worry about infinite
 recursion because of one directory being inside the other."
 
 This assumption is definitely tricky, however there are a couple ways that we can get around this and mainly 2 different final
@@ -33,8 +33,27 @@ user when one directory is contained in another. To do this, we can take the sho
 at the end of that, and compare it to (x) length from the longer directory. If this returns a true value, then we know that the
 longer directory is a subdirectory of the shorter directory, and therefore we can return an error and not run the rest of the sync code.
 - Solution 2
+Another solution could be to create files showing which directories have already been synced. As each directory is updated and compared 
+to other directories, a list is appended to showing the directory, meaning that the directory is completed.
+Now that this is implemented, as we go down the directories, we will check each directory before comparing and updating them, for this value.
+If this value exists in the list, that means that the directory has already been checked, and we can exit back out of this directory and continue
+operations as normal.
+This will skip over any directories that were overlapping with the two directories we were syncing, and eliminate any chance of
+an infinite loop/infinite recursion between these two directories.
 
-Assumption 4 - "No ordinary files in one directory will match the names of directories in the other directory. No symbolic
-links will create cycles in the directories. You don't have to deal with deleted directories, but you do have to
-deal with deleted files. No sync files will be deleted or modified by the test programs"
 
+Assumption (Not on document) - "We do not need to worry about deleted directories syncing their own 'folders', and just worry about
+deleting all of the files inside of these directories"
+
+This assumption allows us to have different directories, but the only differences will be empty directories and the hidden files. 
+This could cause problems if the user wants to view their files without seeing many bloated empty directories that may not have files anymore.
+We will have to implement something at a file system level to keep the sync files, while still not showing these directories.
+- Solution
+To solve this, we can add checks for each directory, and if one no longer exists, then we will turn the other to a "shadow-directory"
+We will need to add a new section of the .sync file, that can display that this was a directory and that it has been currently 'removed'.
+We will then add a dot to the start of the directory name, to make it a now hidden directory that the user will not be able to just 'see'.
+This gives us the opportunity to once again, if the directory is back, integrate the directory with the old "shadow-directory", as we know that
+it used to exist by reading the .sync files directory data. It will then be possible to bring this old sync file back into place with the new
+directory and match the .sync entries with the files in the directory accordingly. This extra facility in the .sync files at file system level
+will allow this to provide us with a longer lasting way to keep sync files maintained while not annoying the user at bloated content in their 
+directories. 
