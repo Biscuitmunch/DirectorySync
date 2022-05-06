@@ -8,6 +8,9 @@ import shutil
 import sys
 import time
 
+# Author: Skylar Wells
+# UPI: jwel929
+
 current_time = time.time()
 
 def Create_Hash(path):
@@ -282,7 +285,7 @@ def Compare_Digest(path1, path2):
 path1 = Path(sys.argv[1])
 path2 = Path(sys.argv[2])
 
-if (path1.is_dir == False and path2.is_dir == False):
+if (path1.is_dir() == False and path2.is_dir() == False):
     print("Both Invalid Directories")
     quit()
     
