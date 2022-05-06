@@ -4,7 +4,7 @@ jwel929
 1:
 The implementation of the synchronisation would not cope well with a large amount of files. This is because when syncing two directories
 we need to do lots of large cpu comparisons, such as
-- Comparing names of one file to all names of files in another directory
+- Comparing names of all files in one directory to names of all files in another directory
 - Sometimes comparing digests to all previous digests in the other directory
 These will have a large strain on the CPU and take some time by nature, as they are O(n^2) or higher operations.
 
@@ -21,3 +21,20 @@ would not do well with syncing big directories, between the CPU strain and the r
 fairly slow solution to a syncing problem.
 
 2:
+Assumption 3 - "The pathnames sent to the sync program will be independent. You don't have to worry about infinite
+recursion because of one directory being inside the other."
+
+This assumption is definitely tricky, however there are a couple ways that we can get around this and mainly 2 different final
+solutions to it. We need a method of stopping this infinite recursion, which may be a fix that can still sync the files, or not letting
+this argument pass through in the first place.
+- Solution 1
+The first solution to making the code proof to this assumption, is the easy way out. This could be completely denying a request from the
+user when one directory is contained in another. To do this, we can take the shorter directories string of (x) characters, plus a '/'
+at the end of that, and compare it to (x) length from the longer directory. If this returns a true value, then we know that the
+longer directory is a subdirectory of the shorter directory, and therefore we can return an error and not run the rest of the sync code.
+- Solution 2
+
+Assumption 4 - "No ordinary files in one directory will match the names of directories in the other directory. No symbolic
+links will create cycles in the directories. You don't have to deal with deleted directories, but you do have to
+deal with deleted files. No sync files will be deleted or modified by the test programs"
+
