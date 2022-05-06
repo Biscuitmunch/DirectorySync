@@ -1,0 +1,23 @@
+Skylar Wells
+jwel929
+
+1:
+The implementation of the synchronisation would not cope well with a large amount of files. This is because when syncing two directories
+we need to do lots of large cpu comparisons, such as
+- Comparing names of one file to all names of files in another directory
+- Sometimes comparing digests to all previous digests in the other directory
+These will have a large strain on the CPU and take some time by nature, as they are O(n^2) or higher operations.
+
+There is also the consideration of the data transfer when copying files directory to directory.
+Some files that have been updated, or need to be moved to directories for the first time could have the potential of being
+very large files, and with a bigger directory, there will typically be more data needed to be synced and changes.
+
+In this program, rather than going through files and only changing what is different, we simply delete one file and copy from one
+directory to the other. This means that we are needing to transfer the entire file size every time any change has been made, even
+if that was just a single character somewhere in the file.
+
+Both of these points, CPU comparisons and data transfer, are big factors into why the implementation of this synchronisation 
+would not do well with syncing big directories, between the CPU strain and the read/write times, this would be a 
+fairly slow solution to a syncing problem.
+
+2:
